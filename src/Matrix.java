@@ -488,7 +488,7 @@ public class Matrix {
     }
 
     public ArrayList<Matrix> factor(boolean doShowStep){
-        showSteps(doShowStep, "Factoring this matrix : +\n" + this.toString());
+        showSteps(doShowStep, "Factoring this matrix :\n" + this.toString());
         ArrayList<Matrix> elementaries = new ArrayList<>();
         //creates a copy of the matrix to be operated on
         Matrix temp = this.clone();

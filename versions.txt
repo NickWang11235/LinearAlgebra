@@ -1,9 +1,0 @@
-v1.0
-Basic implementation of matrix operations. Supported features include:
-	-addition
-	-multiplication
-	-reduce to reduced row echelon or row echelon form with work-determinants with work
-	-inverses with work
-	-writing matrix as product of elementary matrices with work
-	-transpose
-	-different basic row operations

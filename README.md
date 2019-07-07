@@ -23,9 +23,9 @@ Development should follow the below branching protocal:
 	       \   development  	 	---->	development	 ----/	  (updated compatible code)
 	            \    \			      /   /	   \		            /
                      \    \(branch)	     (merge) /   /	    \(branch)	           /(merge)
-	      (branch)\    \     mapReader ---->    /   /(merge)     \	 Issue1  ---->    /
+	      (branch)\    \     feature 1 ---->    /   /(merge)     \	 Issue1  ---->    /
 		       \(development and debugging)    /	    (fix compatibility issue)
 		        \                             /
-		         \    playerMovement ---->   /
+		         \       feature 2   ---->   /
 		           (development and debugging)
 </pre>

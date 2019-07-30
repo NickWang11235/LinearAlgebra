@@ -29,3 +29,5 @@ Development should follow the below branching protocal:
 		         \       feature 2   ---->   /
 		           (development and debugging)
 </pre>
+
+DISCLAIMER: Person who wrote this READ-ME is a retarded noob. He has a small penis. Tiny.

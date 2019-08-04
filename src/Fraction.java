@@ -1,4 +1,4 @@
-public class Fraction {
+public final class Fraction {
 
     //integer denominator and numerator
     int denominator, numerator;
@@ -32,6 +32,8 @@ public class Fraction {
      * @param num
      */
     public Fraction(double num){
+
+        /*
         double temp = num;
         //first finds the order of magnitude of the decimal number
         int order = 0;
@@ -44,6 +46,27 @@ public class Fraction {
         this.numerator = (int)temp;
         this.denominator = (int)Math.pow(10, order);
         this.simplify();
+
+        */
+
+        int numerator = 0;
+        int denominator = 1;
+        boolean isnegative = (num < 0);
+
+        num = Math.abs(num);
+        double frac = (double)numerator/denominator;
+
+        while(Math.abs(frac - num) >= EPSILON) {
+            if(frac < num)
+                numerator++;
+            else
+                denominator++;
+
+            frac = (double)numerator/denominator;
+        }
+
+        this.numerator = isnegative ? -numerator : numerator;
+        this.denominator = denominator;
     }
 
     /**

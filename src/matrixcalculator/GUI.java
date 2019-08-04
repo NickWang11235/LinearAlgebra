@@ -7,11 +7,13 @@ package matrixcalculator;
 
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Set;
 import javax.swing.*;
-import linearalgebra.Fraction;
-import linearalgebra.Matrix;
+import linearalgebra.*;
 
 /**
  *
@@ -24,6 +26,7 @@ public class GUI extends javax.swing.JFrame {
      */
     public GUI() {
         initComponents();
+        customInitComponents();
     }
 
     /**
@@ -43,10 +46,18 @@ public class GUI extends javax.swing.JFrame {
         confirmEdit = new javax.swing.JButton();
         cancelEdit = new javax.swing.JButton();
         matrixEntries = new javax.swing.JFrame();
+        editNamePanel = new javax.swing.JPanel();
+        promptName = new javax.swing.JLabel();
+        editName = new javax.swing.JTextField();
         entriesPanel = new javax.swing.JPanel();
         buttonPanel = new javax.swing.JPanel();
         matrixEntriesCancel = new javax.swing.JButton();
         matrixEntriesOK = new javax.swing.JButton();
+        promptDet = new javax.swing.JFrame();
+        detVarSelection = new javax.swing.JComboBox<>();
+        promptDetVarName = new javax.swing.JLabel();
+        propmtDetVarOK = new javax.swing.JButton();
+        promptDetVarCancel = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         display = new javax.swing.JTextArea();
         menuBar = new javax.swing.JMenuBar();
@@ -55,6 +66,9 @@ public class GUI extends javax.swing.JFrame {
         newMatrix = new javax.swing.JMenuItem();
         operations = new javax.swing.JMenu();
         determinant = new javax.swing.JMenuItem();
+        Variables = new javax.swing.JMenu();
+        storedMatrices = new javax.swing.JMenu();
+        storedMatrixCalculations = new javax.swing.JMenu();
 
         promptSize.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         promptSize.setTitle("New Matrix Size");
@@ -84,7 +98,7 @@ public class GUI extends javax.swing.JFrame {
             promptSizeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(promptSizeLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(promptSizeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(promptSizeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(promptRow, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(promptCol, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(confirmEdit, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -120,15 +134,43 @@ public class GUI extends javax.swing.JFrame {
 
         matrixEntries.setTitle("Enter Matrix");
 
+        promptName.setText("Variable Name");
+
+        javax.swing.GroupLayout editNamePanelLayout = new javax.swing.GroupLayout(editNamePanel);
+        editNamePanel.setLayout(editNamePanelLayout);
+        editNamePanelLayout.setHorizontalGroup(
+            editNamePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(editNamePanelLayout.createSequentialGroup()
+                .addGap(125, 125, 125)
+                .addComponent(promptName)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(editName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        editNamePanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {editName, promptName});
+
+        editNamePanelLayout.setVerticalGroup(
+            editNamePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(editNamePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(editNamePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(promptName)
+                    .addComponent(editName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(15, Short.MAX_VALUE))
+        );
+
+        editNamePanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {editName, promptName});
+
         javax.swing.GroupLayout entriesPanelLayout = new javax.swing.GroupLayout(entriesPanel);
         entriesPanel.setLayout(entriesPanelLayout);
         entriesPanelLayout.setHorizontalGroup(
             entriesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGap(0, 380, Short.MAX_VALUE)
         );
         entriesPanelLayout.setVerticalGroup(
             entriesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 244, Short.MAX_VALUE)
+            .addGap(0, 223, Short.MAX_VALUE)
         );
 
         matrixEntriesCancel.setText("Cancel");
@@ -153,25 +195,90 @@ public class GUI extends javax.swing.JFrame {
         matrixEntries.getContentPane().setLayout(matrixEntriesLayout);
         matrixEntriesLayout.setHorizontalGroup(
             matrixEntriesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(entriesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, matrixEntriesLayout.createSequentialGroup()
+            .addGroup(matrixEntriesLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(matrixEntriesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(entriesPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(editNamePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         matrixEntriesLayout.setVerticalGroup(
             matrixEntriesLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, matrixEntriesLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(editNamePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addComponent(entriesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(buttonPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(17, 17, 17))
         );
 
+        detVarSelection.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                detVarSelectionActionPerformed(evt);
+            }
+        });
+
+        promptDetVarName.setText("Variable");
+
+        propmtDetVarOK.setText("OK");
+        propmtDetVarOK.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                propmtDetVarOKActionPerformed(evt);
+            }
+        });
+
+        promptDetVarCancel.setText("Cancel");
+        promptDetVarCancel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                promptDetVarCancelActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout promptDetLayout = new javax.swing.GroupLayout(promptDet.getContentPane());
+        promptDet.getContentPane().setLayout(promptDetLayout);
+        promptDetLayout.setHorizontalGroup(
+            promptDetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(promptDetLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(promptDetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(promptDetLayout.createSequentialGroup()
+                        .addComponent(promptDetVarName, javax.swing.GroupLayout.PREFERRED_SIZE, 59, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(detVarSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(promptDetLayout.createSequentialGroup()
+                        .addComponent(propmtDetVarOK)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(promptDetVarCancel)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        promptDetLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {detVarSelection, promptDetVarCancel, promptDetVarName, propmtDetVarOK});
+
+        promptDetLayout.setVerticalGroup(
+            promptDetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(promptDetLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(promptDetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(detVarSelection, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(promptDetVarName))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(promptDetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(propmtDetVarOK)
+                    .addComponent(promptDetVarCancel))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        promptDetLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {detVarSelection, promptDetVarCancel, promptDetVarName, propmtDetVarOK});
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setType(java.awt.Window.Type.POPUP);
 
+        display.setEditable(false);
         display.setColumns(20);
+        display.setFont(new java.awt.Font("Monospaced", 0, 12)); // NOI18N
         display.setRows(5);
         jScrollPane1.setViewportView(display);
 
@@ -180,6 +287,7 @@ public class GUI extends javax.swing.JFrame {
 
         edit.setText("Edit");
 
+        newMatrix.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.SHIFT_MASK));
         newMatrix.setText("New Matrix");
         newMatrix.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -202,6 +310,16 @@ public class GUI extends javax.swing.JFrame {
 
         menuBar.add(operations);
 
+        Variables.setText("Var");
+
+        storedMatrices.setText("Stored Matrices");
+        Variables.add(storedMatrices);
+
+        storedMatrixCalculations.setText("Stored Matrix Calculations");
+        Variables.add(storedMatrixCalculations);
+
+        menuBar.add(Variables);
+
         setJMenuBar(menuBar);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -216,17 +334,28 @@ public class GUI extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(183, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 272, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void customInitComponents(){
+        storedMatricesMenus = new ArrayList<>();
+        storedMatrixCalculationMenus = new ArrayList<>();
+    }
+    
     private void determinantActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_determinantActionPerformed
-        // TODO add your handling code here:
-        
+        detVarSelection.removeAllItems();
+        Set<String> s = matrices.keySet();
+        Object[] obj = s.toArray();
+        for(int i = 0; i < s.size(); i++){
+            detVarSelection.addItem((String)obj[i]);
+        }
+        promptDet.pack();
+        promptDet.setVisible(true);
     }//GEN-LAST:event_determinantActionPerformed
 
     private void newMatrixActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newMatrixActionPerformed
@@ -257,7 +386,17 @@ public class GUI extends javax.swing.JFrame {
                 matrix[i][j] = new Fraction(((JTextField)entries[i*col+j]).getText());
         
         Matrix m = new Matrix(matrix);
-        matrices.add(m);
+        matrices.put(editName.getText(), m);
+        
+        JMenuItem item = new JMenuItem();
+        item.setText(editName.getText());
+        storedMatricesMenus.add(item);
+        storedMatrices.add(item);
+        
+        item.addActionListener((ActionEvent evt1) -> {
+            display.setText(matrices.get(item.getText()).toString());
+        });
+        
         display.setText(m.toString());
         matrixEntries.dispose();
         
@@ -266,6 +405,33 @@ public class GUI extends javax.swing.JFrame {
     private void matrixEntriesCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_matrixEntriesCancelActionPerformed
         matrixEntries.dispose();
     }//GEN-LAST:event_matrixEntriesCancelActionPerformed
+
+    private void detVarSelectionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detVarSelectionActionPerformed
+
+    }//GEN-LAST:event_detVarSelectionActionPerformed
+
+    private void promptDetVarCancelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_promptDetVarCancelActionPerformed
+        promptDet.dispose();
+    }//GEN-LAST:event_promptDetVarCancelActionPerformed
+
+    private void propmtDetVarOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_propmtDetVarOKActionPerformed
+        MatrixCalc calc = new MatrixCalc();
+        Fraction det = matrices.get((String)detVarSelection.getSelectedItem()).det(calc);
+        calc.updateDescription(det.toString(), true);
+        calcs.put((String)detVarSelection.getSelectedItem() + "'s determinant", calc);
+        
+        JMenuItem item = new JMenuItem();
+        item.setText((String)detVarSelection.getSelectedItem() + "'s determinant");
+        storedMatrixCalculationMenus.add(item);
+        storedMatrixCalculations.add(item);
+        
+        item.addActionListener((ActionEvent evt1) -> {
+            display.setText(calcs.get(item.getText()).getDescription());
+        });
+        
+        display.setText(calc.getDescription());
+        promptDet.dispose();
+    }//GEN-LAST:event_propmtDetVarOKActionPerformed
 
     private void initMatrixEntries(int row, int col) {
       
@@ -285,7 +451,8 @@ public class GUI extends javax.swing.JFrame {
         matrixEntries.setVisible(true);
     }
 
-    private ArrayList<Matrix> matrices = new ArrayList<>();
+    private HashMap<String,Matrix> matrices = new HashMap<>();
+    private HashMap<String,MatrixCalc> calcs = new HashMap<>();
     
     /**
      * @param args the command line arguments
@@ -322,14 +489,21 @@ public class GUI extends javax.swing.JFrame {
         }); 
     }
     
+    
+    private ArrayList<JMenuItem> storedMatricesMenus;
+    private ArrayList<JMenuItem> storedMatrixCalculationMenus;
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenu Variables;
     private javax.swing.JPanel buttonPanel;
     private javax.swing.JButton cancelEdit;
     private javax.swing.JButton confirmEdit;
+    private javax.swing.JComboBox<String> detVarSelection;
     private javax.swing.JMenuItem determinant;
     private javax.swing.JTextArea display;
     private javax.swing.JMenu edit;
     private javax.swing.JTextField editCol;
+    private javax.swing.JTextField editName;
+    private javax.swing.JPanel editNamePanel;
     private javax.swing.JTextField editRow;
     private javax.swing.JPanel entriesPanel;
     private javax.swing.JMenu file;
@@ -341,8 +515,15 @@ public class GUI extends javax.swing.JFrame {
     private javax.swing.JMenuItem newMatrix;
     private javax.swing.JMenu operations;
     private javax.swing.JLabel promptCol;
+    private javax.swing.JFrame promptDet;
+    private javax.swing.JButton promptDetVarCancel;
+    private javax.swing.JLabel promptDetVarName;
+    private javax.swing.JLabel promptName;
     private javax.swing.JLabel promptRow;
     private javax.swing.JFrame promptSize;
+    private javax.swing.JButton propmtDetVarOK;
+    private javax.swing.JMenu storedMatrices;
+    private javax.swing.JMenu storedMatrixCalculations;
     // End of variables declaration//GEN-END:variables
 
 }

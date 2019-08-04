@@ -279,15 +279,15 @@ public class Matrix {
     /**
      * perform row reduction on a matrix
      * @param mode reduced row echelon, or lower triangle reduction
-     * @param doShowStep whether to display intermediate steps
+     * @param calc
      * @return a reduced matrix
      */
-    public MatrixCalc reduce(Reduction mode, boolean doShowStep) {
-        showSteps(doShowStep, "Reducing this matrix: \n" + this.toString());
+    public MatrixCalc reduce(Reduction mode, MatrixCalc calc) {
         //creates a copy of the matrix to be operated on
         Matrix temp = this.clone();
-        MatrixCalc calc = new MatrixCalc();
         calc.setStartState(this);
+        
+        calc.updateDescription("Reducing this matrix: \n" + this.toString(), true);
         //start from column 0
         for (int j = 0; j < temp.size.row; j++) {
             debug("Starting column " + j);
@@ -304,7 +304,7 @@ public class Matrix {
                 temp.rowOp_Swap(j, firstNonZeroRow);
                 Fraction[] params = {new Fraction(j), new Fraction(firstNonZeroRow)};
                 calc.addArrayOp(new ArrayOp(ArrayOp.Op.ROW_SWAP, params));
-                showSteps(doShowStep, "Swapping row " + j + " with row " + firstNonZeroRow + " : \n" + temp.toString());
+                calc.updateDescription("Swapping row " + j + " with row " + firstNonZeroRow + " : \n" + temp.toString(), true);
             }
             //if rref is desired, finds the multiplier that would reduce the current row
             if(mode == Reduction.RREF) {
@@ -314,7 +314,7 @@ public class Matrix {
                     temp.rowOp_Multiply(j, divisor.inverse());
                     Fraction[] params = {new Fraction(j), divisor};
                     calc.addArrayOp(new ArrayOp(ArrayOp.Op.SCALAR_MULTIPLICATION, params));
-                    showSteps(doShowStep, "Multiply row " + j + " by " + divisor.inverse() + " :\n" + temp.toString());
+                    calc.updateDescription("Multiply row " + j + " by " + divisor.inverse() + " :\n" + temp.toString(), true);
                 }
             }
 
@@ -348,7 +348,7 @@ public class Matrix {
                 temp.rowOp_Add(j, i);
                 //divide the current row by multiplier to its original reduced form
                 temp.rowOp_Multiply(j, multiplier.inverse());
-                showSteps(doShowStep, "Multiplying row " + j + " by  " + multiplier  +  " and adding row " + j + " to row " + i + " : \n" + temp.toString());
+                calc.updateDescription("Multiplying row " + j + " by  " + multiplier  +  " and adding row " + j + " to row " + i + " : \n" + temp.toString(), true);
                 Fraction[] params = {new Fraction(j), multiplier, new Fraction(i)};
                 calc.addArrayOp(new ArrayOp(ArrayOp.Op.MULTIPLY_ADDITION, params));
                 debug("row " + i + " is Complete");
@@ -424,14 +424,13 @@ public class Matrix {
     /**
      * finds the determinant of a matrix by reducing it to lower triangular form and multiply the diagonal
      * additional methods may be added
-     * @param doShowSteps
      * @return
      */
-    public Fraction det(boolean doShowSteps){
+    public Fraction det(MatrixCalc calc){
         if(!this.isSquareMatrix())
             throw new MatrixOperationException("Operation undefined, determinant must be performed on a square matrix");
 
-        MatrixCalc calc = reduce(Reduction.REF, doShowSteps);
+        reduce(Reduction.REF, calc);
         Matrix temp = calc.getEndStateState();
         ArrayList<ArrayOp> ops = calc.getArrayOps();
 
@@ -445,17 +444,16 @@ public class Matrix {
 
         for (int i = 0; i < temp.size.row; i++)
             det = det.multiply(temp.matrix[i][i]);
-        showSteps(doShowSteps, "Multiplying diagonal to find determinant");
+        calc.updateDescription("Multiplying diagonal and multiplying by " + multiplier + " to find determinant", true);
 
         return det.multiply(multiplier);
     }
 
     /**
      * finds the inverse of a square matrix by reducing that matrix augmented with an identity matrix of the same size
-     * @param doShowStep
      * @return
      */
-    public Matrix inverse(boolean doShowStep){
+    public Matrix inverse(MatrixCalc calc){
         //throws unchecked exception if the matrix is not a square matrix
         if(!this.isSquareMatrix())
             throw new MatrixOperationException("Operation undefined, inverse must be performed on a square matrix");
@@ -463,17 +461,17 @@ public class Matrix {
         //first augment the matrix with identity matrix of same size
         Matrix aug = this.augment(this.identityMatrix());
         //then reduce till the left most largest square elements are completely reduced
-        MatrixCalc calc = aug.reduce(Reduction.RREF, doShowStep);
+        aug.reduce(Reduction.RREF, calc);
         Matrix inverse = calc.getEndStateState();
         return inverse.subMatrix(0, this.size.row, this.size.row, this.size.row * 2);
     }
 
-    public ArrayList<Matrix> factor(boolean doShowStep){
-        showSteps(doShowStep, "Factoring this matrix :\n" + this.toString());
+    public ArrayList<Matrix> factor(MatrixCalc calc){
         ArrayList<Matrix> elementaries = new ArrayList<>();
-        MatrixCalc calc = reduce(Reduction.RREF, false);
+        reduce(Reduction.RREF, calc);
+        calc.updateDescription("Factoring this matrix :\n" + this.toString(), true);
         if(!calc.getEndStateState().equals(identityMatrix())) {
-            showSteps(doShowStep, "This matrix can not be written as product of elementary matrices!");
+            calc.updateDescription("This matrix can not be written as product of elementary matrices!", true);
             return null;
         }
         ArrayList<ArrayOp> ops = calc.getArrayOps();
@@ -484,33 +482,33 @@ public class Matrix {
             switch (op.getOp()){
                 case SCALAR_MULTIPLICATION:
                     startMatrix = ArrayOp.operateOperationOnMatrix(startMatrix, op);
-                    showSteps(doShowStep, "Multiplying row " + op.getParams()[0].toString() + " by " + op.getParams()[1].toString() + " :\n" + startMatrix.toString());
+                    calc.updateDescription("Multiplying row " + op.getParams()[0].toString() + " by " + op.getParams()[1].toString() + " :\n" + startMatrix.toString(), true);
                     element = ArrayOp.operateOperationOnMatrix(element, op);
                     elementaries.add(element);
-                    showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
+                    calc.updateDescription("New elementary matrix : \n" + element.toString(), true);
                     break;
                 case MULTIPLY_ADDITION:
                     startMatrix = ArrayOp.operateOperationOnMatrix(startMatrix, op);
-                    showSteps(doShowStep, "Multiplying row " + op.getParams()[0].toString() + " by  " + op.getParams()[1].toString()  +  " and adding row " + op.getParams()[0].toString() + " to row " + op.getParams()[2].toString() + " : \n" + startMatrix.toString());
+                    calc.updateDescription("Multiplying row " + op.getParams()[0].toString() + " by  " + op.getParams()[1].toString()  +  " and adding row " + op.getParams()[0].toString() + " to row " + op.getParams()[2].toString() + " : \n" + startMatrix.toString(), true);
                     element = ArrayOp.operateOperationOnMatrix(element, op);
                     elementaries.add(element);
-                    showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
+                    calc.updateDescription("New elementary matrix : \n" + element.toString(), true);
                     break;
                 case ROW_SWAP:
                     startMatrix = ArrayOp.operateOperationOnMatrix(startMatrix, op);
-                    showSteps(doShowStep, "Swapping row " + op.getParams()[0].toString() + " with row " + op.getParams()[1].toString() + " : \n" + startMatrix.toString());
+                    calc.updateDescription("Swapping row " + op.getParams()[0].toString() + " with row " + op.getParams()[1].toString() + " : \n" + startMatrix.toString(), true);
                     element = ArrayOp.operateOperationOnMatrix(element, op);
                     elementaries.add(element);
-                    showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
+                    calc.updateDescription("New elementary matrix : \n" + element.toString(), true);
                     break;
             }
         }
 
         ArrayList<Matrix> inverses = new ArrayList<>();
         for (int i = 0; i < elementaries.size(); i++)
-            inverses.add(elementaries.get(i).inverse(false));
+            inverses.add(elementaries.get(i).inverse(calc));
 
-        System.out.println("Elementary matrices factorization of matrix : \n" + "\n" + printQueue(inverses));
+        calc.updateDescription("Elementary matrices factorization of matrix : \n" + "\n" + printQueue(inverses), true);
         return inverses;
     }
 
@@ -541,17 +539,7 @@ public class Matrix {
 
         return str;
     }
-
-    /**
-     * prints steps to a solution if specified
-     * @param doShowStep whether to show steps
-     * @param step steps to be printed
-     */
-    private void showSteps(boolean doShowStep, String step) {
-        if (doShowStep)
-            System.out.println(step);
-    }
-
+    
     /**
      * debug program specific info if specified
      * @param str

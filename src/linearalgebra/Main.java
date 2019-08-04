@@ -4,7 +4,7 @@ public class Main {
     public static void main(String[] args) {
 
         //construct new matrices with 2d double array
-        double[][] arrA = {{1,-1,1},{2,-1,1},{1,-2,3}};
+        double[][] arrA = {{1,-1,1},{2,-100,1},{1,-2,3}};
         double[][] arrB = {{-1,0,0},{0,2,0},{0,0,3}};
         //call methods on Matrix object, ex m.inverse(true)
         Matrix A = new Matrix(arrA);
@@ -25,8 +25,11 @@ public class Main {
          */
 
         long starttime = System.currentTimeMillis();
-        B.factor(true);
-//        System.out.println(A.reduce(Matrix.Reduction.RREF,true));
+        MatrixCalc c = new MatrixCalc();
+        A.det(c);
+        System.out.println(c.getDescription());
+                
+        
         long endtime = System.currentTimeMillis();
         System.out.println("That took: " + (endtime-starttime) + "milliseconds");
 

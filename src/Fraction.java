@@ -201,8 +201,21 @@ public class Fraction {
         return multiply(new Fraction(f));
     }
 
+    public Fraction inverse(){
+        return new Fraction(denominator, numerator);
+    }
+
     public boolean equals(Fraction other){
         return this.numerator == other.numerator && this.denominator == other.denominator;
+    }
+
+    public int toInt(boolean override){
+        simplify();
+        if(denominator == 1 || override){
+            return (int)numerator/denominator;
+        }else{
+            throw new ArithmeticException("Fraction can not be simplified to int");
+        }
     }
 
     @Override

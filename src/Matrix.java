@@ -1,6 +1,4 @@
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Queue;
 
 public class Matrix {
 
@@ -72,40 +70,6 @@ public class Matrix {
                 this.matrix[i][j] = new Fraction(matrix[i][j]);
 
         size = new Dimension(matrix.length, matrix[0].length);
-    }
-
-//    public Matrix(AppendMatrix mode, Matrix... matrices) throws MatrixDimensionMismatchException {
-//
-//        switch (mode){
-//
-//            case VERTICAL:
-//
-//                int col = matrices[0].row;
-//                int row = 0;
-//                for (int i = 0; i < matrices.length; i++) {
-//                    if(matrices[i].col != col)
-//                        throw new MatrixDimensionMismatchException("Matrix size invalid, expected columns: " + col + ". Received : " + matrices[i].col);
-//                    row += matrices[i].row;
-//                }
-//
-//
-//
-//            break;
-//
-//            case HORIZONTAL:
-//
-//            break;
-//
-//        }
-//
-//    }
-
-    public enum AppendMatrix {
-
-        VERTICAL,
-
-        HORIZONTAL,
-
     }
 
     /**
@@ -310,10 +274,12 @@ public class Matrix {
      * @param doShowStep whether to display intermediate steps
      * @return a reduced matrix
      */
-    public Matrix reduce(Reduction mode, boolean doShowStep) {
+    public MatrixCalc reduce(Reduction mode, boolean doShowStep) {
         showSteps(doShowStep, "Reducing this matrix: \n" + this.toString());
         //creates a copy of the matrix to be operated on
         Matrix temp = this.clone();
+        MatrixCalc calc = new MatrixCalc();
+        calc.setStartState(this);
         //start from column 0
         for (int j = 0; j < temp.size.row; j++) {
             debug("Starting column " + j);
@@ -322,20 +288,26 @@ public class Matrix {
             int firstNonZeroRow = temp.firstNonZeroRow(j, j);
             //if no such element can be found, then move on to the next column
             if (firstNonZeroRow == -1) {
-                showSteps(doShowStep, "Current column is simplified, moving to next column");
+                debug("Current column is simplified, moving to next column");
                 continue;
             }
             if(firstNonZeroRow != j) {
                 //swap the current row with first non zero element row.
                 temp.rowOp_Swap(j, firstNonZeroRow);
+                Fraction[] params = {new Fraction(j), new Fraction(firstNonZeroRow)};
+                calc.addArrayOp(new ArrayOp(ArrayOp.Op.ROW_SWAP, params));
                 showSteps(doShowStep, "Swapping row " + j + " with row " + firstNonZeroRow + " : \n" + temp.toString());
             }
             //if rref is desired, finds the multiplier that would reduce the current row
             if(mode == Reduction.RREF) {
                 Fraction divisor = temp.matrix[j][j];
-                //divide row to reduce, so that the first non zero element is 1
-                temp.rowOp_Divide(j, divisor);
-                showSteps(doShowStep, "Dividing row " + j + " by " + divisor + " :\n" + temp.toString());
+                if(!divisor.equals(new Fraction(1))) {
+                    //divide row to reduce, so that the first non zero element is 1
+                    temp.rowOp_Multiply(j, divisor.inverse());
+                    Fraction[] params = {new Fraction(j), divisor};
+                    calc.addArrayOp(new ArrayOp(ArrayOp.Op.SCALAR_MULTIPLICATION, params));
+                    showSteps(doShowStep, "Multiply row " + j + " by " + divisor.inverse() + " :\n" + temp.toString());
+                }
             }
 
             //determine if the entire matrix should be reduced
@@ -343,7 +315,7 @@ public class Matrix {
             switch (mode){
                 case RREF:
                     break;
-                case UTRIANGLE:
+                case REF:
                     //reduce the bottom half of the matrix, below row j
                     startI = j;
                     endI = temp.size.row;
@@ -367,14 +339,17 @@ public class Matrix {
                 //add the multiplied current row to the next row
                 temp.rowOp_Add(j, i);
                 //divide the current row by multiplier to its original reduced form
-                temp.rowOp_Divide(j, multiplier);
+                temp.rowOp_Multiply(j, multiplier.inverse());
                 showSteps(doShowStep, "Multiplying row " + j + " by  " + multiplier  +  " and adding row " + j + " to row " + i + " : \n" + temp.toString());
+                Fraction[] params = {new Fraction(j), multiplier, new Fraction(i)};
+                calc.addArrayOp(new ArrayOp(ArrayOp.Op.MULTIPLY_ADDITION, params));
                 debug("row " + i + " is Complete");
             }
             debug("column " + j + " is Complete");
         }
 
-        return temp;
+        calc.setEndState(temp);
+        return calc;
     }
 
     /**
@@ -384,7 +359,7 @@ public class Matrix {
         //completely reduces all elements in left most largest square elements of the matrix
         RREF,
         //reduces all elements in bottom left most largest triangular elements of the matrix
-        UTRIANGLE
+        REF,
     }
 
     /**
@@ -392,7 +367,7 @@ public class Matrix {
      * @param from
      * @param to
      */
-    private Matrix rowOp_Swap(int from, int to) {
+    public Matrix rowOp_Swap(int from, int to) {
         Fraction temp;
         for (int j = 0; j < this.size.col; j++) {
             temp = this.matrix[from][j];
@@ -407,20 +382,9 @@ public class Matrix {
      * @param row
      * @param multiplier
      */
-    private Matrix rowOp_Multiply(int row, Fraction multiplier) {
+    public Matrix rowOp_Multiply(int row, Fraction multiplier) {
         for (int j = 0; j < this.size.col; j++)
             this.matrix[row][j] = this.matrix[row][j].multiply(multiplier);
-        return this;
-    }
-
-    /**
-     * divide entire row by divisor
-     * @param row
-     * @param divisor
-     */
-    private Matrix rowOp_Divide(int row, Fraction divisor) {
-        for (int j = 0; j < this.size.col; j++)
-            this.matrix[row][j] = this.matrix[row][j].divide(divisor);
         return this;
     }
 
@@ -429,7 +393,7 @@ public class Matrix {
      * @param from
      * @param to
      */
-    private Matrix rowOp_Add(int from, int to) {
+    public Matrix rowOp_Add(int from, int to) {
         for (int j = 0; j < this.size.col; j++)
             this.matrix[to][j] = this.matrix[to][j].add(this.matrix[from][j]);
         return this;
@@ -459,14 +423,23 @@ public class Matrix {
         if(!this.isSquareMatrix())
             throw new MatrixOperationException("Operation undefined, determinant must be performed on a square matrix");
 
-        Matrix temp = reduce(Reduction.UTRIANGLE, doShowSteps);
+        MatrixCalc calc = reduce(Reduction.REF, doShowSteps);
+        Matrix temp = calc.getEndStateState();
+        ArrayList<ArrayOp> ops = calc.getArrayOps();
+
         Fraction det = new Fraction(1);
+        Fraction multiplier = new Fraction(1);
+
+        for(ArrayOp op : ops)
+            if(op.getOp() == ArrayOp.Op.ROW_SWAP)
+                multiplier.multiply(-1);
+
 
         for (int i = 0; i < temp.size.row; i++)
             det = det.multiply(temp.matrix[i][i]);
         showSteps(doShowSteps, "Multiplying diagonal to find determinant");
 
-        return det;
+        return det.multiply(multiplier);
     }
 
     /**
@@ -482,82 +455,47 @@ public class Matrix {
         //first augment the matrix with identity matrix of same size
         Matrix aug = this.augment(this.identityMatrix());
         //then reduce till the left most largest square elements are completely reduced
-        Matrix inverse = aug.reduce(Reduction.RREF, doShowStep);
-
+        MatrixCalc calc = aug.reduce(Reduction.RREF, doShowStep);
+        Matrix inverse = calc.getEndStateState();
         return inverse.subMatrix(0, this.size.row, this.size.row, this.size.row * 2);
     }
 
     public ArrayList<Matrix> factor(boolean doShowStep){
         showSteps(doShowStep, "Factoring this matrix :\n" + this.toString());
         ArrayList<Matrix> elementaries = new ArrayList<>();
-        //creates a copy of the matrix to be operated on
-        Matrix temp = this.clone();
-        //start from column 0
-        Matrix element;
-        for (int j = 0; j < temp.size.row; j++) {
-            debug("Starting column " + j);
-            //finds the first row that does not contain 0 in a given element.
-            //reduced form is anchored on non-zero diagonal elements, thus search always begin with an element on the diagonal.
-            int firstNonZeroRow = temp.firstNonZeroRow(j, j);
-            //if no such element can be found, then move on to the next column
-            if (firstNonZeroRow == -1) {
-                showSteps(doShowStep, "Current column is simplified, moving to next column");
-                continue;
+        MatrixCalc calc = reduce(Reduction.RREF, false);
+        if(!calc.getEndStateState().equals(identityMatrix())) {
+            showSteps(doShowStep, "This matrix can not be written as product of elementary matrices!");
+            return null;
+        }
+        ArrayList<ArrayOp> ops = calc.getArrayOps();
+
+        Matrix startMatrix = calc.getStartState();
+        for(ArrayOp op : ops){
+            Matrix element = identityMatrix();
+            switch (op.getOp()){
+                case SCALAR_MULTIPLICATION:
+                    startMatrix = ArrayOp.operateOperationOnMatrix(startMatrix, op);
+                    showSteps(doShowStep, "Multiplying row " + op.getParams()[0].toString() + " by " + op.getParams()[1].toString() + " :\n" + startMatrix.toString());
+                    element = ArrayOp.operateOperationOnMatrix(element, op);
+                    elementaries.add(element);
+                    showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
+                    break;
+                case MULTIPLY_ADDITION:
+                    startMatrix = ArrayOp.operateOperationOnMatrix(startMatrix, op);
+                    showSteps(doShowStep, "Multiplying row " + op.getParams()[0].toString() + " by  " + op.getParams()[1].toString()  +  " and adding row " + op.getParams()[0].toString() + " to row " + op.getParams()[2].toString() + " : \n" + startMatrix.toString());
+                    element = ArrayOp.operateOperationOnMatrix(element, op);
+                    elementaries.add(element);
+                    showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
+                    break;
+                case ROW_SWAP:
+                    startMatrix = ArrayOp.operateOperationOnMatrix(startMatrix, op);
+                    showSteps(doShowStep, "Swapping row " + op.getParams()[0].toString() + " with row " + op.getParams()[1].toString() + " : \n" + startMatrix.toString());
+                    element = ArrayOp.operateOperationOnMatrix(element, op);
+                    elementaries.add(element);
+                    showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
+                    break;
             }
-            if(firstNonZeroRow != j) {
-                //swap the current row with first non zero element row.
-                temp.rowOp_Swap(j, firstNonZeroRow);
-                element = temp.identityMatrix().rowOp_Swap(j, firstNonZeroRow);
-                showSteps(doShowStep, "Swapping row " + j + " with row " + firstNonZeroRow + " : \n");
-                showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
-                elementaries.add(element);
-            }
-
-            Fraction divisor = temp.matrix[j][j];
-            if(!divisor.equals(new Fraction(1))) {
-                //divide row to reduce, so that the first non zero element is 1
-                temp.rowOp_Divide(j, divisor);
-                element = temp.identityMatrix().rowOp_Divide(j, divisor);
-                showSteps(doShowStep, "Dividing row " + j + " by " + divisor + " :\n" + temp.toString());
-                showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
-                elementaries.add(element);
-            }
-
-            for (int i = 0; i < temp.size.row; i++) {
-                debug("Starting row " + i);
-                //if the current row is compared to itself, skip to the next row
-                if (i == j) {
-                    debug("Current row, skipping to next row");
-                    continue;
-                }
-                if(temp.matrix[i][j].equals(new Fraction(0))){
-                    debug("Row already simplified, skipping to next row");
-                    continue;
-                }
-                element = temp.identityMatrix();
-                //compute the multiplier that would reduce the next row to zero in the current column
-                Fraction multiplier = new Fraction(-1).multiply( temp.matrix[i][j].divide(temp.matrix[j][j]));
-
-                //multiply the current row by multiplier
-                temp.rowOp_Multiply(j, multiplier);
-                element.rowOp_Multiply(j, multiplier);
-                showSteps(doShowStep, "Multiplying row " + j + " by " + multiplier + " : \n" + temp.toString());
-
-                //add the multiplied current row to the next row
-                temp.rowOp_Add(j, i);
-                element.rowOp_Add(j,i);
-                showSteps(doShowStep, "Adding row " + j + " to row " + i + " : \n" + temp.toString());
-
-                //divide the current row by multiplier to its original reduced form
-                temp.rowOp_Divide(j, multiplier);
-                element.rowOp_Divide(j,multiplier);
-                showSteps(doShowStep, "Dividing row " + j + " by " + multiplier + " :\n" + temp.toString());
-                showSteps(doShowStep, "New elementary matrix : \n" + element.toString());
-
-                elementaries.add(element);
-                debug("row " + i + " is Complete");
-            }
-            debug("column " + j + " is Complete");
         }
 
         ArrayList<Matrix> inverses = new ArrayList<>();
@@ -565,7 +503,6 @@ public class Matrix {
             inverses.add(elementaries.get(i).inverse(false));
 
         System.out.println("Elementary matrices factorization of matrix : \n" + "\n" + printQueue(inverses));
-
         return inverses;
     }
 
@@ -627,6 +564,18 @@ public class Matrix {
                 temp.matrix[i][j] = this.matrix[i][j];
 
         return temp;
+    }
+
+    public boolean equals(Matrix another){
+        if(!size.equals(another.size))
+            return false;
+
+        for (int i = 0; i < size.row; i++)
+            for (int j = 0; j < size.col; j++)
+                if(!matrix[i][j].equals(another.matrix[i][j]))
+                    return false;
+
+        return true;
     }
 
     /**
